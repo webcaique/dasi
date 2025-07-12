@@ -1,0 +1,83 @@
+div{
+    width: 20vw;
+    height: 20vw;
+    margin:10px;
+    box-sizing: border-box;
+}
+
+section{
+    display: flex;
+    height: 90vh;
+    width: 90vw;
+    margin:10px;
+    border:1px solid black;
+
+}
+
+#flex1{
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: end;
+}
+
+#flex2{
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: start;
+    
+}
+
+#id1{
+    background-color: red;
+    flex-shrink: 1;
+}
+
+#id2{
+    background-color: red;
+    flex-shrink: 1;
+
+}
+
+#id3{
+    background-color: red;
+    flex-shrink: 3;
+}
+
+#id4{
+    background-color: red;
+
+}
+
+#id5{
+    background-color: red;
+}
+
+#id6{
+    background-color: red;
+}
+
+#id7{
+    background-color: red;
+}
+
+#id8{
+    background-color: red;
+}
+
+#id9{
+    background-color: red;
+}
+
+#id10{
+    background-color: red;
+}
+
+#id11{
+    background-color: red;
+}
+
+
+#id12{
+    background-color: red;
+}
