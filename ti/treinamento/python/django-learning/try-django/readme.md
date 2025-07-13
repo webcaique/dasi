@@ -217,8 +217,324 @@ def appNameView(request):
     }
     render(request, "appName/index.html",{})
 
+## How Django Templates Load with Apps => para reutilizar o código ou distribuir para outros
+- criar uma pasta template dentro do app que quer reutilizar e utiliazr a mesma estrutura que utiliza no o##a no APP, migrar para o ambiente de produção
 
-## How Django Templates Load with Apps
+## Django Model Forms
+- criar um forms.py no pasta do app
+#### no forms.py
+from django import forms
+from .models import nameProductModel
+
+class nameAppModelForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = [
+            'titel',
+            'description',
+            'price'
+        ]
+
+#### no views.py
+- add:
+from .forms import nameAppModelForm
+
+def name_create_view(resquest):
+    form = nameAppModelForm(resquest.POST or None)
+    if form.is_valid():
+        form.save()
+        form = nameAppModelForm() # reinicia o formulário
+        
+    context = {
+        'form':form
+    }
+    return render(request,"name.html", context)
+
+#### no name.html
+<form method="POST"> {% csrf_token %}
+{{ form.as_p }}
+<input type='submit' value='Save' />
+</form>
+
+## Raw HTML Form
+#### no html
+<form action='.' method='POST'> {% csrf_token %}
+    <input type='text' name='title' /> # name => ser igual do model boas práticas
+    
+    <input type='submit' value='Save' />
+</form>
+
+<form action='/search/' method='GET'>
+    <input type='text' name='title' /> # name => ser igual do model boas práticas
+    
+    <input type='submit' value='Save' />
+</form>
+
+#### no views.py
+- add:
+from .forms import nameAppModelForm
+
+def name_create_view(resquest):
+    context = {}
+    if request.method == "POST":
+        new_title = request.POST.get('title')
+        # nameModel.objects.create(title=new_title)
+    return render(request,"name.html", context)
+
+## PURE DJANGO FORM
+#### no views.py
+- add:
+from .forms import nameAppModelForm, RawDjangoForm
+
+
+def name_create_view(resquest):
+    a_form = RawDjangoForm()
+    if resquest.method == "POST":
+        a_form = RawDjangoForm(request.POST)
+        if a_form.is_valid():
+            # now data is good
+            print(a_form.cleaned_data)
+            nameModel.objects.create(**a_form.cleaned_data) #cadastra
+        else:
+            print(a_form.errors)
+    context = {
+        'form': a_form,
+    }
+    return render(request,"name.html", context)
+
+#### no forms.py
+class RawDjangoForm(forms.Form):
+    title       = forms.CharField()
+    description = forms.CharField()
+    price       = forms.DecimalField()
+    
+#### no .html
+<form action='.' method='POST' > {% csrf_token %}
+    {{ form.as_p }}
+    <input type='submit' value='Save' />
+</form>
+
+## FORM WIDGETS
+widget => usado para adicionar atributos html aos elementos
+class RawDjangoForm(forms.Form):
+    title       = forms.CharField(required=True,
+                                  label='',
+                                  widget=forms.TextInput(
+                                        attrs={
+                                            "placeholder":"Title"
+                                        }
+                                    )
+                                  )
+    description = forms.CharField(
+                                widget=forms.Textarea(
+                                attrs={
+                                        "class":"class-name",
+                                        "id":"id_name",
+                                        "rows":100,
+                                        "cols": 120
+                                    }
+                                )
+    price       = forms.DecimalField(initial=199.99)
+
+## FORM VALIDATION METHODS
+#### views.py
+from .forms import nameAppModelForm
+
+def name_create_view(resquest):
+    form = nameAppModelForm(resquest.POST or None)
+    if form.is_valid():
+        form.save()
+        form = nameAppModelForm() # reinicia o formulário
+        
+    context = {
+        'form':form
+    }
+    return render(request,"name.html", context)
+
+#### forms.py
+from django import forms
+from .models import nameProductModel
+
+class nameAppModelForm(forms.ModelForm):
+    title       = forms.CharField(required=True,
+                                  label='',
+                                  widget=forms.TextInput(
+                                        attrs={
+                                            "placeholder":"Title"
+                                        }
+                                    )
+                                  )
+    description = forms.CharField(
+                                widget=forms.Textarea(
+                                attrs={
+                                        "class":"class-name",
+                                        "id":"id_name",
+                                        "rows":100,
+                                        "cols": 120
+                                    }
+                                )
+    price       = forms.DecimalField(initial=199.99)
+    
+    class Meta:
+        model = Product
+        fields = [
+            'titel',
+            'description',
+            'price'
+        ]
+    
+    def clean_<field_name>(self, *args, **kargs):
+        title = self.cleaned_data.get("title")
+        if <condition>:
+            return title
+        else:
+            raise forms.ValidationError("This is not a valid title")
+    
+OU
+
+class nameAppModelForm(forms.Form):
+    title       = forms.CharField(required=True,
+                                  label='',
+                                  widget=forms.TextInput(
+                                        attrs={
+                                            "placeholder":"Title"
+                                        }
+                                    )
+                                  )
+    description = forms.CharField(
+                                widget=forms.Textarea(
+                                attrs={
+                                        "class":"class-name",
+                                        "id":"id_name",
+                                        "rows":100,
+                                        "cols": 120
+                                    }
+                                )
+    price       = forms.DecimalField(initial=199.99)
+    
+    def clean_<field_name>(self, *args, **kargs):
+        title = self.cleaned_data.get("title")
+        if <condition>:
+            return title
+        else:
+            raise forms.ValidationError("This is not a valid title")
+
+
+##Initial Values for Forms => dados iniciais
+#### no arquivo de views
+from .forms import RawDjangoForm, nameAppModelForm
+from .models import nameModel
+
+def render_initial_data(request):
+    initial_data = {
+        'title': "Title",
+        
+    }
+    obj = Product.objects.get(id=1)
+    #form = RawDjangoForm(request.POST or None, initial=initial_data)
+    form = nameAppModelForm(request.POST or None, initial=initial_data, instance=obj)
+    if form.is_valid(): # instance vai fazer atualizar o objeto dentro dele
+        form.save()
+    context = {
+        'form':form
+    }
+    return render(request,"name.html", context)
+
+## DYNAMIC URL ROUTING
+#### no views.html
+from django.shortcuts import render
+from .models import nameModel
+
+def dynamic_lookup_view(request, my_id):
+    obj = Product.object.get(id=my_id)
+    context = {
+        'object': obj
+    }
+    return render(request, "name.html", context)
+
+#### urls.py (importando o dynamic_lookup_view)
+urlpatterns = [
+    path('namePge/<int:my_id>/',dynamic_lookup_view, name='name')
+    entre => /pode colocar qualquer variável para encontrar o resultado, como str, int, slug/
+]
+
+## HANDLE DoesNotExist
+from django.http import Http404
+from django.shortcuts import render, get_object_or_404
+from .models import nameModel
+
+def dynamic_lookup_view(request, my_id):
+    #obj = Product.object.get(id=my_id)
+    #obj = get_object_or_404(nameModel, id=my_id)
+    try:
+        obj = Product.object.get(id=my_id)
+    except nameModel.DoesNotExist:
+        raise Http404
+    context = {
+        'object': obj
+    }
+    return render(request, "name.html", context)
+
+
+## DELETE AND CONFIRM
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import nameModel
+
+def nameApp_delete_view(request,id):
+    obj = get_object_or_404(nameModel, id=id)
+    #POST request para confirmar o deletar => fazer um forms que retorna isso
+    if request.method == "POST":
+        obj.delete()
+        return redirect('../')
+    context = {
+        "object": obj
+    }
+    
+    return render(request, "delete.html", context)
+
+#### no html que vai deletar o dado
+<form action="." method="POST"> {% csrf_token %}
+    <input type="submit" value="Yes" />
+    <a href="../">Cancel </a>
+
+
+## VIEW OF A LIST OF DATABASE OBJECT
+#### views.py
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import nameModel
+
+
+def product_list_view(request):
+    queryset = nameModel.object.all() # list of object
+    context = {
+        'object_list': queryset
+    }
+    return render(request, "name.html", context)
+
+#### html
+{% for instance in object_list %}
+    {{instance.titles}}
+{% endfor %}
+
+## DYNAMIC LINKING OF URLs
+#### .html file
+{% for instance in object %}
+    <p>{{ instance.id }} - <a href='/product/{{ instance.id }}'>{{ instance.title }}</a></p>
+{% endfor %}
+### PRECISA DOS URLS DINÂMICOS (código abaixo é uma base)
+#### no views.html
+from django.shortcuts import render
+from .models import nameModel
+
+def dynamic_lookup_view(request, my_id):
+    return render(request, "name.html", context)
+
+#### urls.py (importando o dynamic_lookup_view)
+urlpatterns = [
+=>> path('namePge/<int:my_id>/',dynamic_lookup_view, name='name')
+    entre => /pode colocar qualquer variável para encontrar o resultado, como str, int, slug/
+]
+
 
 # IMPORTANTES
 - python manage.py migrate => toda vez que atualizar qualquer coisa no APP, migrar para o ambiente de produção
