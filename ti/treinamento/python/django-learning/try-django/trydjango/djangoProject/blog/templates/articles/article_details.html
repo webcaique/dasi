@@ -1,0 +1,9 @@
+{% extends 'root.html' %}
+
+{% block content %}
+    <h1>{{ object.title }}</h1>
+    <p>{{ object.content }}</p>
+    <p><a href="../">Voltar</a></p>
+    <p><a href="{{object.articles_update}}">ATUALIZAR</a></p>
+    <p><a href="{{object.articles_delete}}">Deletar</a></p>
+{% endblock %}

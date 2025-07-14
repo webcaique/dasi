@@ -113,8 +113,8 @@ urlpatterns = [
 ## ROTAS URL E CHAMADOS
 urlpatterns = [
     #adicionar
-    path('/page1', page1_view, name='page1'),
-    path('/page2', page2_view, name='page2')
+    path('page1/', page1_view, name='page1'),
+    path('page2/', page2_view, name='page2')
 ]
 
 ## DJANGO TEMPLATES
@@ -295,6 +295,7 @@ def name_create_view(resquest):
             # now data is good
             print(a_form.cleaned_data)
             nameModel.objects.create(**a_form.cleaned_data) #cadastra
+            # ** => permite "tirar" {} de um dicionário
         else:
             print(a_form.errors)
     context = {
@@ -317,14 +318,17 @@ class RawDjangoForm(forms.Form):
 ## FORM WIDGETS
 widget => usado para adicionar atributos html aos elementos
 class RawDjangoForm(forms.Form):
-    title       = forms.CharField(required=True,
-                                  label='',
-                                  widget=forms.TextInput(
-                                        attrs={
-                                            "placeholder":"Title"
-                                        }
-                                    )
-                                  )
+    title       = forms.CharField(
+        widget=forms.TextInput(
+            attrs={
+                "class": "special",
+                "id":"title_id",
+                "placeholder":"AQUI"
+                }
+            ),
+        label="AQUI",
+        required=False
+        )
     description = forms.CharField(
                                 widget=forms.Textarea(
                                 attrs={
@@ -333,7 +337,7 @@ class RawDjangoForm(forms.Form):
                                         "rows":100,
                                         "cols": 120
                                     }
-                                )
+                                ))
     price       = forms.DecimalField(initial=199.99)
 
 ## FORM VALIDATION METHODS
@@ -516,11 +520,19 @@ def product_list_view(request):
     {{instance.titles}}
 {% endfor %}
 
+
 ## DYNAMIC LINKING OF URLs
+
+#### no models.py do app
+dentro do model
+def get_absolute_url(self):
+    return f"/products/{self.id}"
+
 #### .html file
 {% for instance in object %}
-    <p>{{ instance.id }} - <a href='/product/{{ instance.id }}'>{{ instance.title }}</a></p>
+    <p>{{ instance.id }} - <a href='{{ instance.get_absolute_url }}'>{{ instance.title }}</a></p>
 {% endfor %}
+
 ### PRECISA DOS URLS DINÂMICOS (código abaixo é uma base)
 #### no views.html
 from django.shortcuts import render
@@ -535,6 +547,182 @@ urlpatterns = [
     entre => /pode colocar qualquer variável para encontrar o resultado, como str, int, slug/
 ]
 
+## DJANGO URLs REVERSE
+#### no models.py do app
+from django.urls import reverse
+class nameModel(models.Model)
+    def get_absolute_url(self):
+        return reverse("<name_in_urls>",kwargs={"id": seld.id}) #f"/products/{self.id}"
+        # path('namePge/<int:my_id>/',dynamic_lookup_view, //name='name'//importante)
+        
+USANDO AS URLS DINÂMICAS, O REVERSE USA UM ENDEREÇO QUE SE QUEIRA IR E, QUANDO VOLTAR, RETORNA PARA O URL QUE DESEJA
+
+## IN APP URLS AND NAMESPACE
+#### in view app, for exempla products 
+from django.shortcuts import render, get_object_or_404, redirect
+from .forms import ProductModelForm
+from .models import Products
+
+
+def product_create_view(request):
+    form = ProductModelForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        form = ProductModelForm()
+    
+    context = {
+        'form': form
+    }
+    
+    return render(request, "products/products_create.html", context)
+    
+def product_update_view(request, id):
+    obj = get_object_or_404(Products, id=id)
+    form = ProductModelForm(request.POST or None, instance=obj)
+    if form.is_valid():
+        form.save()
+        
+    context = {
+        'form': form
+    }
+    
+    return render(request, "products/products_create.html", context)
+
+def product_list_view(request):
+    queryset = Products.objects.all()
+    
+    context = {
+        "object_list":queryset
+    }
+    
+    return render(request, "products/products_list.html", context)
+
+def product_detail_view(request, id):
+    obj = get_object_or_404(Products, id=id)
+        
+    context = {
+        'object': obj
+    }
+    
+    return render(request, "products/products_detail.html", context)
+
+def product_deelte_view(request, id):
+    obj = get_object_or_404(Products, id=id)
+    if request.method == "POST":
+        obj.delete()
+        return redirect('../../')
+    context = {
+        'object': obj
+    }
+    
+    return render(request, "products/products_delete.html", context)
+
+
+### urls.py (setting)
+#### => não é eficiente
+from products.views import (
+    product_create_view,
+    product_update_view,
+    product_detail_view,
+    product_delete_view,
+    product_list_view,
+    )
+    
+urlpatterns = [
+    path('products/', product_list_view, name='product-list'),
+    path('products/create/', product_create_view, name='product-list'),
+    path('products/<int:id>/', product_detail_view, name='product-detail'),
+    path('products/<int:id>/update/', product_update_view, name='product-update'),
+    path('products/<int:id>/delete/', product_delete_view, name='product-delete'),
+]
+
+#### => eficiente
+##### => ciar urls.py na pasta do app
+from django.contrib import admin
+from django.urls import path
+
+from .views import (
+    product_create_view,
+    product_update_view,
+    product_detail_view,
+    product_delete_view,
+    product_list_view,
+    )
+   
+app_name = 'products' 
+urlpatterns = [
+    path('', product_list_view, name='product-list'),
+    path('create/', product_create_view, name='product-list'),
+    path('<int:id>/', product_detail_view, name='product-detail'),
+    path('<int:id>/update/', product_update_view, name='product-update'),
+    path('<int:id>/delete/', product_delete_view, name='product-delete'),
+]
+
+##### => ciar urls.py na pasta dos settings
+from django.contrib import admin
+from django.urls import include, path
+
+urlpatterns = [
+    path('products/', include('products.urls')),
+]
+
+##### no models.py
+from django.db import models
+form django.urls import reverse
+
+class Products(models.Model):
+    title       = models.CharField(max_length=120)
+    description = models.TextField(blank=True, null=True)
+    price       = models.DecimalField(decimal_places=2, max_digits=10000)
+    summary     = models.TextField(blank=False, null=False)
+    featured    = models.BooleanField(default=False)
+    
+    def get_absolute_url(self):
+        return reverse("products:product-detail", kwargs={"id": self.id})
+
+## CLASS BASED VIEW
+=> usando classes genéricas para fazer as views
+=> Por padrão, agora é o object == obj, object_list==object_list, pk=id
+#### no views.py do app do projeto
+from django.views.generic import (
+    CreateView,
+    UpdateView,
+    DeleteView,
+    DetailView,
+    ListView
+)
+
+from .models import nameModel
+
+#### LISTVIEW
+class nameAppListView(ListView):
+    template_name = '<name>/<name_page>_list.html' # isso vai mudar a renderização padrão
+    queryset = nameModel.objects.all() # por padrão, renderizar o nameApp/nameModel_list.html
+
+class nameAppDetailView(ListView):
+    template_name = '<name>/<name_page>_detail.html' # isso vai mudar a renderização padrão
+    
+    def get_object(self):
+        #muda o argumento pk para id
+        id_ = self.kwargs.get("id")
+        return get_object_or_404(nameModel, id=id_)
+
+
+    
+#### no urls.py do app
+from .views import (
+    nameAppListView,
+    nameAppDetailView,
+    
+)
+
+app_name='articles'
+urlpatterns = [
+    path('',nameAppListView.as_view(), name='<name>_list'),
+    #path('<int:pk>/',nameAppDetailView.as_view(), name='<name>_list'), => caso não mudar para id
+    path('<int:id>/',nameAppDetailView.as_view(), name='<name>_list')
+]
+    
 
 # IMPORTANTES
 - python manage.py migrate => toda vez que atualizar qualquer coisa no APP, migrar para o ambiente de produção

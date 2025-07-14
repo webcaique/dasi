@@ -1,0 +1,9 @@
+{% extends "root.html" %}
+
+{% block content %}
+<p>Quer realmente deletar?</p>
+<form action="." method="post"> {% csrf_token %}
+    <input type="submit" value="Sim">
+    <a href="../">Não</a>
+</form>
+{% endblock %}

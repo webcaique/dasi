@@ -1,0 +1,8 @@
+{% extends "root.html" %}
+
+{% block content %}
+<form action="." method="post">{% csrf_token %}
+    <input type="submit" value="Yes">
+    <a href="../"></a>
+</form>
+{% endblock %}

@@ -1,8 +1,14 @@
 {% extends "root.html" %}
 
 {% block content %}
-    <h1>AQUI</h1>
+    <!-- <h1>AQUI</h1>
     {% for item in list %}
         <p>{{ item }}</p>
-    {% endfor %}
+    {% endfor %} -->
+    <p><a href="../">VOLTAR</a></p>
+    <p>{{ object.title }}</p>
+    <p>{{ object.description }}</p>
+    <p>{{ object.price }}</p>
+    <p> <a href="{{object.form_update_url}}">ATUALIZAR</a></p>
+    <p><a href="{{object.product_delete_url}}">DELETAR</a></p>
 {% endblock %}

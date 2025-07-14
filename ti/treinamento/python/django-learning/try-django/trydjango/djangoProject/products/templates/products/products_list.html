@@ -1,0 +1,10 @@
+{% extends "root.html" %}
+
+{% block content %}
+<ul>
+    {% for item in object_list %}
+        <li>{{ item.id }}- <a href="{{item.get_absolute_url}}"> {{ item.title }}</a></li>
+    {% endfor %}
+    <p><a href="{{add_form_link}}">ADICIONAR</a></p>
+</ul>
+{% endblock %}

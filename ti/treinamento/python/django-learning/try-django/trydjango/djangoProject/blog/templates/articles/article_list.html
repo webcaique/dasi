@@ -1,0 +1,10 @@
+{% extends 'root.html' %}
+
+{% block content %}
+    {% for item in article_list %}
+        {% if item.active %}
+            <p>{{ item.title }} - <a href="{{item.articles_links}}">VER</a></p>
+        {% endif %}
+    {% endfor %}
+    <p><a href="{{add_link}}">Adicionar</a></p>
+{% endblock %}
